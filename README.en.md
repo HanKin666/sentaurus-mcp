@@ -2,6 +2,21 @@
 
 [中文](README.md) | **English**
 
+## Contents
+
+- [Quick start](#quick-start)
+- [Features](#features)
+- [Software versions](#software-versions)
+- [Manual installation](#manual-installation)
+- [First use: diagnostics and connection guidance](#first-use-diagnostics-and-connection-guidance)
+- [Connecting to a remote server](#connecting-to-a-remote-server)
+- [Example requests](#example-requests)
+- [How it works](#how-it-works)
+- [FAQ](#faq)
+- [Validation](#validation)
+- [Development background](#development-background)
+- [References and licensing](#references-and-licensing)
+
 **Let an LLM read Sentaurus experiment information and logs, and submit simulation tasks through tools.**
 
 For semiconductor device researchers. Sentaurus commonly runs on a laboratory or company server, while your AI assistant runs on your own computer. Getting started therefore involves two steps: **connect to the server, then connect the tools to Sentaurus on that server.**
@@ -10,7 +25,7 @@ For semiconductor device researchers. Sentaurus commonly runs on a laboratory or
 
 Give the assistant access to the machine hosting Sentaurus. This project's remote connection uses SSH and requires a server address, SSH port, username and working authentication. VNC desktop access lets you view the software, but does not establish the MCP execution channel used here.
 
-If you only have a port and password or do not know whether you use SSH or VNC, start with the beginner prompt below.
+If you only have a server port and password or do not know whether you use SSH or VNC, start with the beginner prompt below.
 
 ### Step 2: Connect to Sentaurus
 
@@ -31,11 +46,10 @@ Here, reading Sentaurus means accessing experiment records, input manifests, exe
 
 > **Version 0.1 — prototype.** Synthetic tests have passed; real Sentaurus execution has not been validated. A working Sentaurus installation and license are required. No private device designs, credentials, or experimental data are included.
 
-[Features](#features) · [Quick start](#quick-start) · [Example requests](#example-requests) · [How it works](#how-it-works) · [FAQ](#faq) · [Validation](#validation)
 
 ## Quick start
 
-### Only have a port and password? Send this to your AI assistant
+### Only have a server port and password? Send this to your AI assistant
 
 Use an assistant with **local file access, command execution and MCP configuration capabilities**. A plain web chat without these tools can only guide you.
 
@@ -43,7 +57,7 @@ Use an assistant with **local file access, command execution and MCP configurati
 Help me install and connect this Sentaurus MCP:
 https://github.com/HanKin666/sentaurus-mcp
 
-I am a beginner. I only know a port and password and am unsure whether
+I am a beginner. I only know a server port and password and am unsure whether
 the connection is VNC or SSH. Use the latest main-branch documentation
 and setup wizard. Check the local installation first.
 Ask only for the next missing piece of information.
@@ -108,6 +122,25 @@ Experienced users and deployment assistants can continue with [manual installati
 | Validate physics, extract metrics, optimize parameters | Not implemented |
 | Fill available CPU, memory, or license capacity | Not implemented; only concurrent experiment count is limited |
 | ZIP export, cancellation, crash recovery | Not implemented |
+
+## Software versions
+
+Recorded on 2026-09-09; installed versions are not compatibility guarantees.
+
+| Software | Recorded version |
+| --- | --- |
+| Sentaurus TCAD | T-2022.03 (research manifest; individual component builds unverified) |
+| Codex desktop | 26.901.6511.0 |
+| Windows | 10.0.19045 |
+| RealVNC Viewer | 7.13.1.57 |
+| Python | 3.12.10, 64-bit |
+| MCP Python SDK | 1.30.0 |
+| HTTPX / Pydantic | 0.28.1 / 2.13.5 |
+| pytest / pip | 8.4.2 / 25.0.1 |
+| Git | 2.53.0.windows.2 |
+| Project release / package metadata | v0.1.0-alpha.2 / 0.1.0 |
+
+Remote OS, Python, SSH builds, VNC server, license manager, optional keyring backend and selected LLM checkpoint remain unverified. Locally installed VNC Server 6.5.0.41730 and SangforVNC 7,1,0,2 do not prove use in the workflow. An old local `sentaurus-workbench-mcp==0.1.0` distribution record is not an additional dependency: use a fresh virtual environment. This inventory does not establish public MCP end-to-end Sentaurus validation.
 
 ## Manual installation
 
@@ -194,7 +227,7 @@ Generic JSON example for a client running **on the same machine** as the MCP ser
 
 - Set `SENTAURUS_ENABLE_ACTIONS=1` to permit preparation and submission. Omit it or use `0` for read-only access.
 - The MCP service and Worker must use the same configuration.
-- For a Windows client and Linux server, configure an SSH STDIO connection so the MCP executable runs on the server. A server path cannot be used as a Windows local executable. No automatic remote setup wizard is provided.
+- For a Windows client and Linux server, configure an SSH STDIO connection so the MCP executable runs on the server. A server path cannot be used as a Windows local executable. The local wizard generates connection settings; server installation remains separate.
 - A Windows local installation typically uses `.venv/Scripts/sentaurus-mcp.exe`; this does not imply Sentaurus is available there.
 
 A successful connection should expose the eight tools listed below. Start the Worker before submitting experiments.
@@ -333,6 +366,8 @@ These are usage examples, not completed simulation results. The tool does not au
 | `get_experiment` | Status, manifest, process IDs, and timing |
 | `read_log` | Bounded log reads using byte offsets |
 | `list_artifacts` | File index without embedding large TDR data |
+| `diagnose_environment` | Read-only environment checks |
+| `get_connection_guide` | Connection guidance without logging in |
 
 `files` maps filenames to text. Each entry in `stages` contains `tool` and `input_file`. Tools must be configured and input files supplied. Combined text input is limited to 2 MB per experiment.
 
@@ -342,15 +377,7 @@ The `sentaurus://capabilities` resource describes the implemented scope.
 
 ## How it works
 
-```mermaid
-flowchart LR
-    A["AI assistant"] --> B["MCP interface"]
-    B --> C["Persistent records and queue"]
-    C --> D["Independent Worker"]
-    D --> E["Sentaurus programs"]
-    E --> F["Native outputs and logs"]
-    F --> B
-```
+
 
 The MCP interface handles assistant requests; the Worker runs experiments. A simulation does not need to keep a conversation request open.
 
@@ -410,19 +437,9 @@ python -m pip install -e '.[test]'
 python -m pytest -q
 ```
 
-Recorded local validation: Windows, Python 3.12, **5 tests passed**, covering real MCP protocol interaction, continued execution after client exit, duplicate submission, input validation, and concurrency limits.
+Recorded local validation: Windows, Python 3.12, **12 tests passed (second alpha release)**, covering real MCP protocol interaction, continued execution after client exit, duplicate submission, input validation, and concurrency limits.
 
 Tests use synthetic Python tasks, not real Sentaurus simulations. A Linux CI workflow is included; check the repository Actions page for its status. See [validation details](VALIDATION.md).
-
-## Future work
-
-Not currently implemented:
-
-- Real Sentaurus integration validation across installed releases.
-- Native Workbench project creation and experiment append.
-- CPU, memory, and license admission control.
-- Cancellation, stale-state reconciliation, and recovery.
-- TDR parsing, metrics, native figures, and output packaging.
 
 ## Development background
 
