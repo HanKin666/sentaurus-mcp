@@ -4,7 +4,7 @@
 
 **Prepare inputs, submit simulations, inspect status, and read logs through an MCP-compatible AI assistant.**
 
-For device researchers who already use Sentaurus. This standalone tool connects an assistant to batch experiments without requiring a private research dashboard.
+For semiconductor device researchers who already use Sentaurus. This standalone tool connects an assistant to batch experiments without requiring a private research dashboard.
 
 > **Version 0.1 — prototype.** Synthetic tests have passed; real Sentaurus execution has not been validated. A working Sentaurus installation and license are required. No private device designs, credentials, or experimental data are included.
 
