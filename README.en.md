@@ -118,6 +118,78 @@ Generic JSON example for a client running **on the same machine** as the MCP ser
 
 A successful connection should expose the six tools listed below. Start the Worker before submitting experiments.
 
+## Connecting to a remote server
+
+**Local MCP execution needs no separate server login. Remote use requires SSH configuration.** This release has no connection wizard or MCP tool that accepts passwords.
+
+### Information to prepare
+
+| Item | What to provide |
+| --- | --- |
+| Server address | Administrator-provided IP or hostname; replace `server.example.com` |
+| SSH port | Confirm with the administrator; replace `22`, not with a VNC port |
+| Linux username | Replace `your_user`; the account needs data-directory write and program execution permissions |
+| Authentication | Passwords can be entered interactively; background use needs an approved key or other noninteractive authentication method |
+| MCP and configuration paths | Absolute server-side paths; use the same configuration as the independent Worker |
+| Sentaurus environment | Configure the installation, license, and required environment variables on the server |
+
+**SSH executes commands; VNC displays a remote desktop.** VNC display numbers, ports, and passwords are not SSH settings. VNC access does not establish SSH or simulation permissions.
+
+### Test login yourself in a local terminal
+
+Replace these placeholders:
+
+```bash
+ssh -p 22 your_user@server.example.com
+```
+
+Before accepting a new host key, verify its fingerprint with your administrator. If prompted for a password, enter it directly in SSH; no visible characters are normal. Do not put passwords or private-key contents in documentation, client configuration, command arguments, or an LLM conversation.
+
+**Successful interactive password login does not enable automatic MCP login.** Background clients often have no interactive terminal. The configuration below deliberately fails if noninteractive authentication is unavailable instead of opening a password prompt. For passphrase-protected keys, load the key into your local authentication agent yourself, or use an administrator-approved alternative. Password-only environments need a client with secure interactive authentication support; this project does not implement it.
+
+### Launch the server-side MCP through SSH
+
+First install and configure the package on the server and start the Worker independently as described above. Then configure your local client:
+
+```json
+{
+  "mcpServers": {
+    "sentaurus": {
+      "command": "ssh",
+      "args": [
+        "-T",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "StrictHostKeyChecking=yes",
+        "-p",
+        "22",
+        "your_user@server.example.com",
+        "env",
+        "SENTAURUS_MCP_CONFIG=/absolute/path/to/sentaurus-mcp/config.json",
+        "SENTAURUS_ENABLE_ACTIONS=0",
+        "/absolute/path/to/sentaurus-mcp/.venv/bin/sentaurus-mcp"
+      ]
+    }
+  }
+}
+```
+
+`ssh` is the **local** OpenSSH executable; use its actual path if it is not on PATH. The MCP executable and configuration paths are **remote**. Example paths contain no spaces; paths with spaces require correct remote-shell quoting.
+
+- `-T` disables pseudo-terminal allocation for STDIO communication.
+- `BatchMode=yes` disables interactive authentication prompts.
+- `StrictHostKeyChecking=yes` requires a previously verified and saved host key.
+- Start with read-only `SENTAURUS_ENABLE_ACTIONS=0`; change to `1` when preparation and submission are needed.
+- To select a key, add `"-i", "/absolute/local/path/to/private_key"` before the destination, or use local SSH configuration. Supply a path, never key contents.
+- Noninteractive sessions may not load interactive shell environment settings. The server Worker needs the Sentaurus license and library environment. Login scripts must not print extra text into the MCP standard-output stream.
+
+Start by listing experiments, then test submission within your authorized scope. Discovering six tools proves interface connectivity, **not successful Sentaurus execution or physical validation**.
+
+Troubleshooting: check credentials for `Permission denied`; check address, SSH port, and network for refused/timed-out connections; verify host-key changes with the administrator rather than disabling checks; check Worker state and configuration paths if it is offline.
+
+These instructions are configuration guidance, not a completed remote end-to-end test. References: [OpenSSH command manual](https://man.openbsd.org/ssh.1), [SSH configuration manual](https://man.openbsd.org/ssh_config.5).
+
 ## Example requests
 
 After providing complete, reviewed input scripts, ask your assistant:
