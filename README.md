@@ -119,7 +119,25 @@ sentaurus-worker
 - 客户端在 Windows、Sentaurus 在 Linux 时，需要配置 SSH 标准输入输出连接，让 MCP 在服务器上运行；不能直接把服务器路径填成 Windows 本地命令。本版本暂未提供自动配置向导。
 - Windows 本地安装时，可执行文件通常位于 `.venv/Scripts/sentaurus-mcp.exe`；这不代表 Windows 已能运行你的 Sentaurus。
 
-连接成功后，客户端应能发现下表中的 **6 个工具**。提交前确认后台执行器已经启动。
+连接成功后，客户端应能发现下表中的 **8 个工具**。提交前确认后台执行器已经启动。
+
+## 首次使用：连接诊断与引导
+
+更新安装后，可让助手调用 `diagnose_environment`。即使没有配置，也会返回当前主机的环境、配置、存储权限、执行器心跳和程序路径状态；不创建实验目录，不启动仿真，也不验证许可证。
+
+只有 VNC 时，调用 `get_connection_guide(mode="vnc")` 获取限制说明。有 SSH 时，提供主机、用户名、端口、服务器 Python 和配置路径，生成只读客户端配置。该工具不连接、不自动安装，也不接收密码。
+
+本机终端示例（替换占位内容）：
+
+```bash
+python -m sentaurus_mcp.doctor
+python -m sentaurus_mcp.doctor --mode vnc
+python -m sentaurus_mcp.doctor --mode ssh --host server.example.com --user your_user --port 22 --remote-python /absolute/path/.venv/bin/python --remote-config /absolute/path/config.json
+```
+
+最后一条默认仅生成配置；加 `--probe` 才通过 SSH 执行远程只读诊断。服务器须先安装包含诊断模块的版本。连接检查最多等待 30 秒，不会停止仿真，也不会部署或启动执行器。请先自行准备认证、核对主机密钥。当前向导支持域名和 IPv4，暂不支持 IPv6。
+
+收到远程诊断也不等于许可证有效；未收到时明确标为失败或未检查。部署仍按下文手动完成，当前没有图形登录弹窗或自动部署功能。
 
 ## 远程服务器连接
 

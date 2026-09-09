@@ -114,7 +114,25 @@ Generic JSON example for a client running **on the same machine** as the MCP ser
 - For a Windows client and Linux server, configure an SSH STDIO connection so the MCP executable runs on the server. A server path cannot be used as a Windows local executable. No automatic remote setup wizard is provided.
 - A Windows local installation typically uses `.venv/Scripts/sentaurus-mcp.exe`; this does not imply Sentaurus is available there.
 
-A successful connection should expose the six tools listed below. Start the Worker before submitting experiments.
+A successful connection should expose the eight tools listed below. Start the Worker before submitting experiments.
+
+## First use: diagnostics and connection guidance
+
+After upgrading, call `diagnose_environment` from the assistant. It works without a config file and reports the current host runtime, configuration, storage access, Worker heartbeat and executable paths separately. It does not create experiment directories, start simulations or validate licenses.
+
+Call `get_connection_guide(mode="vnc")` for VNC-only limitations. For SSH, supply host, username, port, remote virtual-environment Python and config paths to generate read-only client settings. This tool never connects, installs software or accepts passwords.
+
+Local terminal examples (replace placeholders):
+
+```bash
+python -m sentaurus_mcp.doctor
+python -m sentaurus_mcp.doctor --mode vnc
+python -m sentaurus_mcp.doctor --mode ssh --host server.example.com --user your_user --port 22 --remote-python /absolute/path/.venv/bin/python --remote-config /absolute/path/config.json
+```
+
+The last command only generates configuration. Add `--probe` to explicitly run read-only remote diagnostics over SSH. The remote installation must already include this diagnostic module. The 30-second probe timeout does not stop simulations. It neither deploys software nor starts the Worker. Prepare authentication and verify host keys yourself first. The guide currently supports hostnames/IPv4, not IPv6.
+
+A missing remote report is marked failed or unchecked; a received report does not establish license validity. Follow the manual deployment steps below. No graphical login dialog or automatic deployment is implemented.
 
 ## Connecting to a remote server
 
@@ -182,7 +200,7 @@ First install and configure the package on the server and start the Worker indep
 - To select a key, add `"-i", "/absolute/local/path/to/private_key"` before the destination, or use local SSH configuration. Supply a path, never key contents.
 - Noninteractive sessions may not load interactive shell environment settings. The server Worker needs the Sentaurus license and library environment. Login scripts must not print extra text into the MCP standard-output stream.
 
-Start by listing experiments, then test submission within your authorized scope. Discovering six tools proves interface connectivity, **not successful Sentaurus execution or physical validation**.
+Start by listing experiments, then test submission within your authorized scope. Discovering eight tools proves interface connectivity, **not successful Sentaurus execution or physical validation**.
 
 Troubleshooting: check credentials for `Permission denied`; check address, SSH port, and network for refused/timed-out connections; verify host-key changes with the administrator rather than disabling checks; check Worker state and configuration paths if it is offline.
 

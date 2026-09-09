@@ -17,6 +17,7 @@ test = ["pytest>=8,<9"]
 [project.scripts]
 sentaurus-mcp = "sentaurus_mcp.server:main"
 sentaurus-worker = "sentaurus_mcp.worker:main"
+sentaurus-doctor = "sentaurus_mcp.doctor:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
