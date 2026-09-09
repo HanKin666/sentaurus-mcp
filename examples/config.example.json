@@ -1,0 +1,9 @@
+{
+  "root": "/absolute/path/to/private/experiments",
+  "max_parallel": 1,
+  "tools": {
+    "sde": ["/absolute/path/to/sde", "-e", "-l", "{input}"],
+    "sdevice": ["/absolute/path/to/sdevice", "{input}"],
+    "svisual": ["/absolute/path/to/svisual", "-b", "{input}"]
+  }
+}
