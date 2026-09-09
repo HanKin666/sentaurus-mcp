@@ -10,6 +10,66 @@ For semiconductor device researchers who already use Sentaurus. This standalone 
 
 [Features](#features) · [Quick start](#quick-start) · [Example requests](#example-requests) · [How it works](#how-it-works) · [FAQ](#faq) · [Validation](#validation)
 
+## Quick start
+
+### Only have a port and password? Send this to your AI assistant
+
+Use an assistant with **local file access, command execution and MCP configuration capabilities**. A plain web chat without these tools can only guide you.
+
+```text
+Help me install and connect this Sentaurus MCP:
+https://github.com/HanKin666/sentaurus-mcp
+
+I am a beginner. I only know a port and password and am unsure whether
+the connection is VNC or SSH. Use the latest main-branch documentation
+and setup wizard. Check the local installation first.
+Ask only for the next missing piece of information.
+
+Start by asking for the server address and the application I normally use.
+Do not treat a port as an address or guess an SSH port.
+Let me enter passwords locally with hidden input, never in this chat.
+
+If existing settings can help, ask me to identify the specific file or
+connection entry. Extract only address, port and username, not passwords
+or private-key contents.
+Report local installation, server connection, Worker status and
+Sentaurus validation separately. Saved settings or a visible desktop
+do not mean simulation is ready.
+Before submitting a real experiment, explain its purpose and resources.
+```
+
+Use the latest `main` code. The early `v0.1.0-alpha.1` archive lacks the subsequently added diagnostics and wizard. This prompt guides a capable assistant; it does not guarantee automatic deployment by every LLM.
+
+### What the assistant should ask
+
+| Question | What you provide |
+| --- | --- |
+| Server address? | Administrator-provided IP/hostname, or the address of an existing connection with secrets hidden |
+| Which connection application? | VNC Viewer, terminal or SSH client; “unknown” is fine |
+| Port or display number? | Your known value; `:1` or `:01` may be VNC display notation, not a TCP port |
+| May I check this endpoint's greeting? | Optional consent for one endpoint only, without scanning |
+| Username? | Linux username for SSH; some VNC connections need no username |
+| Save connection settings locally? | Choose a local `.txt` path; optional passwords go to the system credential store |
+| Is SSH access available? | Continue SSH setup if available; otherwise follow the VNC-only guidance |
+
+**A port and password alone do not identify a server.** An address is also needed. The assistant should help find missing details rather than demand a complete technical configuration at once.
+
+### VNC-only users
+
+The wizard can save your settings, and VNC can still display Sentaurus. **This MCP does not automate VNC or deploy a server agent through VNC.** A VNC password alone cannot connect the remote Worker.
+
+Ask your administrator:
+
+> I already have VNC access and want to use Sentaurus MCP. Is SSH permitted? Please provide the address, SSH port, Linux username and approved authentication method. If SSH is unavailable, can a Python MCP service and client run locally on the server?
+
+### Letting the assistant read existing settings
+
+Name the specific file or connection entry and authorize extraction of address, port and username only. Do not authorize reading passwords/private keys or scanning unrelated directories.
+
+This requires the assistant's own file-access tools. The wizard's `--load` only reads its own profile format; it does **not** automatically import every VNC/SSH client format.
+
+Experienced users and deployment assistants can continue with [manual installation](#manual-installation) and [remote connection](#connecting-to-a-remote-server).
+
 ## Features
 
 | Task | Current support |
@@ -26,7 +86,7 @@ For semiconductor device researchers who already use Sentaurus. This standalone 
 | Fill available CPU, memory, or license capacity | Not implemented; only concurrent experiment count is limited |
 | ZIP export, cancellation, crash recovery | Not implemented |
 
-## Quick start
+## Manual installation
 
 This example installs the service **on a Linux simulation server**.
 
