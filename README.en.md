@@ -4,6 +4,7 @@
 
 ## Contents
 
+- [What this project does](#what-this-project-does)
 - [Quick start](#quick-start)
 - [Features](#features)
 - [Software versions](#software-versions)
@@ -17,35 +18,24 @@
 - [Development background](#development-background)
 - [References and licensing](#references-and-licensing)
 
-**Let an LLM read Sentaurus experiment information and logs, and submit simulation tasks through tools.**
+## What this project does
 
-For semiconductor device researchers. Sentaurus commonly runs on a laboratory or company server, while your AI assistant runs on your own computer. Getting started therefore involves two steps: **connect to the server, then connect the tools to Sentaurus on that server.**
+**Sentaurus MCP lets an AI assistant read experiment records and logs, and submit Sentaurus scripts through tools.** You describe a task; the assistant calls MCP tools; Sentaurus performs the calculation.
 
-### Step 1: Connect to the server
+Sentaurus commonly runs on a server while the AI client runs on your computer. First establish server access, then configure the Sentaurus environment on that server.
 
-Give the assistant access to the machine hosting Sentaurus. This project's remote connection uses SSH and requires a server address, SSH port, username and working authentication. VNC desktop access lets you view the software, but does not establish the MCP execution channel used here.
+| Component | Responsibility | Location |
+| --- | --- | --- |
+| AI assistant / LLM client | Understand requests, call tools and explain responses | Usually your computer |
+| SSH | Launch the remote MCP interface and carry its communication | Between computer and server |
+| MCP interface | Accept requests, prepare experiments, query status and read logs | Sentaurus server |
+| Worker | Take queued experiments, launch Sentaurus and record execution state | Same server; started independently and kept running |
+| Sentaurus | Perform structure, mesh and device calculations | Server |
+| VNC Viewer | Display the server desktop for native GUI inspection | Your computer; this MCP does not control it |
 
-If you only have a server port and password or do not know whether you use SSH or VNC, start with the beginner prompt below.
+**The published second test release is `v0.1.0-alpha.2`.** Python package metadata still says `0.1.0` because it was not updated for that release. That number alone cannot identify the installed source revision. The second alpha and `main` include the connection wizard; the first alpha does not. This README describes `main`.
 
-### Step 2: Connect to Sentaurus
-
-Install this project on the server, configure executable paths, storage and the license environment, and start the Worker independently. Configure your local AI client to launch the server-side MCP interface over SSH. The assistant can then query experiments, read logs, submit prepared scripts and list output files.
-
-```mermaid
-flowchart LR
-    A["Your computer: LLM / AI assistant"] -->|"Step 1: SSH connection"| B["Server: MCP interface"]
-    B -->|"Step 2: executable and environment setup"| C["Worker → Sentaurus"]
-    C --> D["Experiment status, logs and native files"]
-    D --> B
-    B --> A
-```
-
-**A connected server does not mean Sentaurus is ready to run.** Check the Worker, executable paths, license and actual execution results separately. When the client and Sentaurus already run on the same server, an additional remote connection is unnecessary.
-
-Here, reading Sentaurus means accessing experiment records, input manifests, execution status, logs and output file indexes. **Arbitrary GUI reading, TDR content parsing and automatic device-performance validation are not implemented.** MCP exposes tools; the LLM uses their responses to assist analysis.
-
-> **Version 0.1 — prototype.** Synthetic tests have passed; real Sentaurus execution has not been validated. A working Sentaurus installation and license are required. No private device designs, credentials, or experimental data are included.
-
+The public MCP has passed synthetic tests, but a complete real Sentaurus run has not been validated. The author's research workflow is separate from validation of this public package. Private dashboard code and experiment data are not included.
 
 ## Quick start
 
@@ -75,7 +65,7 @@ do not mean simulation is ready.
 Before submitting a real experiment, explain its purpose and resources.
 ```
 
-Use the latest `main` code. The early `v0.1.0-alpha.1` archive lacks the subsequently added diagnostics and wizard. This prompt guides a capable assistant; it does not guarantee automatic deployment by every LLM.
+Whether the assistant can install software depends on its file and command permissions. The wizard itself collects settings and generates configuration.
 
 ### What the assistant should ask
 
@@ -144,7 +134,7 @@ Remote OS, Python, SSH builds, VNC server, license manager, optional keyring bac
 
 ## Manual installation
 
-This example installs the service **on a Linux simulation server**.
+For deployment assistants and terminal users: **perform steps 1–4 on the Linux simulation server**. Step 5 applies only when the AI client runs there too. For a client on your own computer, use [remote connection](#connecting-to-a-remote-server) instead.
 
 ### 1. Prerequisites
 
@@ -234,6 +224,8 @@ A successful connection should expose the eight tools listed below. Start the Wo
 
 ## First use: diagnostics and connection guidance
 
+There are two separate operations: the **setup wizard** collects and saves connection settings; **diagnostics** check executable paths, directory access and Worker availability. Neither installs or starts Sentaurus.
+
 ### Local dialog or terminal wizard
 
 Update the local installation and run (choose a suitable local data directory):
@@ -267,7 +259,7 @@ python -m sentaurus_mcp.doctor --mode ssh --host server.example.com --user your_
 
 The last command only generates configuration. Add `--probe` to explicitly run read-only remote diagnostics over SSH. The remote installation must already include this diagnostic module. The 30-second probe timeout does not stop simulations. It neither deploys software nor starts the Worker. Prepare authentication and verify host keys yourself first. The guide currently supports hostnames/IPv4, not IPv6.
 
-A missing remote report is marked failed or unchecked; a received report does not establish license validity. Follow the manual deployment steps below. The local setup dialog does not authenticate remotely or deploy software.
+A missing remote report is marked failed or unchecked; a received report does not establish license validity. Follow [manual installation](#manual-installation). The local setup dialog does not authenticate remotely or deploy software.
 
 ## Connecting to a remote server
 
@@ -377,9 +369,7 @@ The `sentaurus://capabilities` resource describes the implemented scope.
 
 ## How it works
 
-
-
-The MCP interface handles assistant requests; the Worker runs experiments. A simulation does not need to keep a conversation request open.
+The flow is: save scripts → submit to the queue → Worker launches Sentaurus → query status, read logs and list outputs. Submission returns an experiment ID, which the assistant can use for later queries without keeping one request open throughout the simulation.
 
 Example storage layout; output names depend on your scripts:
 
