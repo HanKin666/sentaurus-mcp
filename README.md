@@ -241,6 +241,21 @@ python -m pytest -q
 - 任务取消、异常状态校正与恢复。
 - TDR 解析、指标提取、原生图像和结果打包。
 
+## 开发背景
+
+本项目源于使用 Codex 辅助开展 Sentaurus TCAD 科研的实践。开发工作结合了通过 VNC Viewer 查看远程 Sentaurus 原生界面、脚本执行、日志分析和结果核对，并逐步将实验管理流程整理为可复用的 MCP 接口。
+
+| 组成 | 在这套工作方式中的作用 |
+| --- | --- |
+| Codex | 辅助编写与修改脚本、整理实验流程、分析日志及开发工具 |
+| VNC Viewer | 查看远程 Sentaurus 界面，辅助人工核对结构和运行情况 |
+| Sentaurus | 执行实际的结构、网格及器件仿真 |
+| 本项目 MCP 与独立后台执行器 | 为 AI 客户端提供实验准备、任务提交、状态查询和日志读取接口，并启动批处理任务 |
+
+当前发布版本通过服务器上的独立后台执行器启动仿真，不依赖 Codex 操作 VNC Viewer；其他支持相应 MCP 连接方式的 AI 客户端也可接入。VNC 图形界面自动操作、SDE 自动交互建模和原生截图不属于当前发布版本的功能。
+
+开发过程中使用的私人科研工作台、服务器配置和器件实验数据不随本仓库发布。上述背景说明不代表当前 MCP 已完成真实 Sentaurus 端到端验证；验证范围以[验证记录](VALIDATION.md)为准。
+
 ## 参考与许可
 
 说明文档的组织参考了 [Playwright MCP](https://github.com/microsoft/playwright-mcp) 和 [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) 的用途介绍、快速开始与分层说明方式。

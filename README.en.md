@@ -234,6 +234,21 @@ Not currently implemented:
 - Cancellation, stale-state reconciliation, and recovery.
 - TDR parsing, metrics, native figures, and output packaging.
 
+## Development background
+
+This project grew out of using Codex to assist Sentaurus TCAD research. The development workflow combined viewing the remote native Sentaurus interface through VNC Viewer with script execution, log analysis, and result checks. Reusable experiment-management steps were then organized into an MCP interface.
+
+| Component | Role in the workflow |
+| --- | --- |
+| Codex | Assist with writing and revising scripts, organizing experiments, analyzing logs, and developing tools |
+| VNC Viewer | View remote Sentaurus interfaces and support manual checks of structures and run status |
+| Sentaurus | Perform the actual structure, mesh, and device simulations |
+| This MCP and its independent Worker | Expose preparation, submission, status, and log tools to AI clients and launch batch tasks |
+
+The current release starts simulations through an independent server-side Worker. It does not require Codex to operate VNC Viewer, and other AI clients supporting the applicable MCP connection can connect. Automated VNC interaction, interactive SDE modeling, and native screenshot capture are not features of the current release.
+
+The private research dashboard, server configuration, and device experiment data used during development are not distributed with this repository. This background does not imply that the current MCP has passed real Sentaurus end-to-end validation; see the [validation record](VALIDATION.md) for the tested scope.
+
 ## References and licensing
 
 Documentation organization draws on [Playwright MCP](https://github.com/microsoft/playwright-mcp) and the [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk).
