@@ -1,10 +1,33 @@
-# Sentaurus MCP | Connect AI assistants to TCAD
+# Sentaurus MCP | Let LLMs access Sentaurus
 
 [中文](README.md) | **English**
 
-**Prepare inputs, submit simulations, inspect status, and read logs through an MCP-compatible AI assistant.**
+**Let an LLM read Sentaurus experiment information and logs, and submit simulation tasks through tools.**
 
-For semiconductor device researchers who already use Sentaurus. This standalone tool connects an assistant to batch experiments without requiring a private research dashboard.
+For semiconductor device researchers. Sentaurus commonly runs on a laboratory or company server, while your AI assistant runs on your own computer. Getting started therefore involves two steps: **connect to the server, then connect the tools to Sentaurus on that server.**
+
+### Step 1: Connect to the server
+
+Give the assistant access to the machine hosting Sentaurus. This project's remote connection uses SSH and requires a server address, SSH port, username and working authentication. VNC desktop access lets you view the software, but does not establish the MCP execution channel used here.
+
+If you only have a port and password or do not know whether you use SSH or VNC, start with the beginner prompt below.
+
+### Step 2: Connect to Sentaurus
+
+Install this project on the server, configure executable paths, storage and the license environment, and start the Worker independently. Configure your local AI client to launch the server-side MCP interface over SSH. The assistant can then query experiments, read logs, submit prepared scripts and list output files.
+
+```mermaid
+flowchart LR
+    A["Your computer: LLM / AI assistant"] -->|"Step 1: SSH connection"| B["Server: MCP interface"]
+    B -->|"Step 2: executable and environment setup"| C["Worker → Sentaurus"]
+    C --> D["Experiment status, logs and native files"]
+    D --> B
+    B --> A
+```
+
+**A connected server does not mean Sentaurus is ready to run.** Check the Worker, executable paths, license and actual execution results separately. When the client and Sentaurus already run on the same server, an additional remote connection is unnecessary.
+
+Here, reading Sentaurus means accessing experiment records, input manifests, execution status, logs and output file indexes. **Arbitrary GUI reading, TDR content parsing and automatic device-performance validation are not implemented.** MCP exposes tools; the LLM uses their responses to assist analysis.
 
 > **Version 0.1 — prototype.** Synthetic tests have passed; real Sentaurus execution has not been validated. A working Sentaurus installation and license are required. No private device designs, credentials, or experimental data are included.
 
