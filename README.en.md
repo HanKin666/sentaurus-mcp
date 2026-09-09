@@ -49,8 +49,6 @@ source .venv/bin/activate
 python -m pip install -e .
 ```
 
-A private repository requires access from the account used to clone it.
-
 ### 3. Configure executables and storage
 
 ```bash
