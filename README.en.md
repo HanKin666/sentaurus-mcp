@@ -118,6 +118,25 @@ A successful connection should expose the eight tools listed below. Start the Wo
 
 ## First use: diagnostics and connection guidance
 
+### Local dialog or terminal wizard
+
+Update the local installation and run (choose a suitable local data directory):
+
+```bash
+python -m pip install -e '.[setup]'
+python -m sentaurus_mcp.setup --gui --output connection-local.txt
+```
+
+Omit `--gui` for terminal prompts. Dialogs require Python Tk and a desktop; use terminal mode otherwise. `--load connection-local.txt --output connection-new.txt` reads only the named profile for defaults; it never scans other applications or credentials.
+
+Prompts cover VNC/SSH/unknown, hostname, actual TCP port, username (optional for VNC), and authentication type. SSH also asks for remote Python/config paths, which may initially be left blank. Ambiguous `host:1` viewer notation is rejected rather than guessed. Optional detection reads only the specified endpoint's greeting with user consent; no scanning or authentication is attempted.
+
+UTF-8 `.txt` profiles contain JSON with non-password connection settings, status and read-only client configuration when enough details are supplied. Existing files are not overwritten. Optional passwords are entered locally with hidden input and stored only in a supported system credential store; the text file holds a reference. There is no plaintext fallback. Profiles still contain server addresses and should remain local.
+
+**Saved passwords are not automatically used for login, and the wizard does not deploy a server agent.** VNC-only users still need an SSH channel or a server-local client for this MCP. Background SSH authentication must be configured separately. Saving configuration is not successful authentication.
+
+Local tests cover input validation, greeting detection, profile persistence and the terminal VNC flow. GUI dialogs and real platform credential stores require environment-specific verification. Never send passwords to the assistant or MCP tools.
+
 After upgrading, call `diagnose_environment` from the assistant. It works without a config file and reports the current host runtime, configuration, storage access, Worker heartbeat and executable paths separately. It does not create experiment directories, start simulations or validate licenses.
 
 Call `get_connection_guide(mode="vnc")` for VNC-only limitations. For SSH, supply host, username, port, remote virtual-environment Python and config paths to generate read-only client settings. This tool never connects, installs software or accepts passwords.
@@ -132,11 +151,11 @@ python -m sentaurus_mcp.doctor --mode ssh --host server.example.com --user your_
 
 The last command only generates configuration. Add `--probe` to explicitly run read-only remote diagnostics over SSH. The remote installation must already include this diagnostic module. The 30-second probe timeout does not stop simulations. It neither deploys software nor starts the Worker. Prepare authentication and verify host keys yourself first. The guide currently supports hostnames/IPv4, not IPv6.
 
-A missing remote report is marked failed or unchecked; a received report does not establish license validity. Follow the manual deployment steps below. No graphical login dialog or automatic deployment is implemented.
+A missing remote report is marked failed or unchecked; a received report does not establish license validity. Follow the manual deployment steps below. The local setup dialog does not authenticate remotely or deploy software.
 
 ## Connecting to a remote server
 
-**Local MCP execution needs no separate server login. Remote use requires SSH configuration.** This release has no connection wizard or MCP tool that accepts passwords.
+**Local MCP execution needs no separate server login. Remote use requires SSH configuration.** Use the local wizard above; MCP tools do not accept passwords.
 
 ### Information to prepare
 
