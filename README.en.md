@@ -255,4 +255,8 @@ Documentation organization draws on [Playwright MCP](https://github.com/microsof
 
 Architecture research references: [Ansys Mechanical MCP](https://github.com/ansys/pymechanical-mcp), [Ansys AEDT MCP](https://github.com/ansys/pyaedt-mcp), and [OpenFOAM MCP](https://github.com/SciMate-AI/openfoam-mcp). Implementation is independent; no source code was copied.
 
-Uses the official MCP Python SDK with `>=1.12,<2`. An open-source license has not yet been selected. This unofficial project is not endorsed by Synopsys and includes no commercial software, manuals, or licenses.
+Uses the official MCP Python SDK with `>=1.12,<2`.
+
+Original code and documentation in this project are licensed under the [Apache License 2.0](LICENSE). Copyright 2026 HanKin666. Third-party dependencies retain their own licenses.
+
+This license does not grant rights to use Sentaurus or other third-party commercial software; users must obtain the required authorization separately. This unofficial project is not endorsed by Synopsys and includes no commercial software, manuals, or license entitlements.

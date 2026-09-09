@@ -262,4 +262,8 @@ python -m pytest -q
 
 架构调研参考：[Ansys Mechanical MCP](https://github.com/ansys/pymechanical-mcp)、[Ansys AEDT MCP](https://github.com/ansys/pyaedt-mcp)、[OpenFOAM MCP](https://github.com/SciMate-AI/openfoam-mcp)。本项目独立实现，没有复制这些项目的源代码。
 
-本项目使用官方 MCP Python SDK，版本约束为 `>=1.12,<2`。目前尚未选定开源许可证。项目非 Synopsys 官方产品，不包含商业软件、手册或授权文件。
+本项目使用官方 MCP Python SDK，版本约束为 `>=1.12,<2`。
+
+本项目原创代码与文档采用 [Apache License 2.0](LICENSE)，版权声明：Copyright 2026 HanKin666。第三方依赖遵循各自的许可证。
+
+本许可证不授予 Sentaurus 或其他第三方商业软件的使用权；使用者仍需自行取得相应授权。项目非 Synopsys 官方产品，不包含商业软件、手册或授权文件。
