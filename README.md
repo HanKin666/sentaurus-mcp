@@ -51,8 +51,6 @@ source .venv/bin/activate
 python -m pip install -e .
 ```
 
-仓库为私有时，下载账号需要仓库访问权限。
-
 ### 3. 配置仿真程序和数据目录
 
 复制示例配置：
