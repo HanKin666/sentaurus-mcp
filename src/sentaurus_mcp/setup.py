@@ -60,7 +60,7 @@ def store_password(reference, password):
 
 def save_profile(path, profile):
     # Only known non-secret fields reach disk. Existing profiles are never overwritten.
-    allowed = {'schema', 'host', 'port', 'requested_transport', 'detected_transport', 'username', 'auth', 'credential_ref', 'remote_python', 'remote_config', 'client_config', 'state'}
+    allowed = {'schema', 'host', 'port', 'requested_transport', 'detected_transport', 'username', 'auth', 'credential_ref', 'remote_python', 'remote_config', 'client_config', 'state', 'local_profile_state', 'remote_state'}
     if set(profile) - allowed:
         raise ValueError('Unexpected profile fields')
     target = Path(path).expanduser()
@@ -109,9 +109,45 @@ def main():
             show = print
         def field(key, label, fallback=''):
             return ask(label, defaults.get(key) or fallback)
-        mode = field('requested_transport', '连接方式：auto 不确定 / vnc / ssh', 'auto').strip().lower()
-        host = field('host', '服务器域名或 IPv4（不要附带 :端口）')
-        port = field('port', '实际 TCP 端口；VNC 显示编号不是端口', {'ssh': '22', 'vnc': '5900'}.get(mode, ''))
+        mode = field('requested_transport', '连接方式：auto 不确定 / vnc 桌面 / ssh 远程命令通道', 'auto').strip().lower()
+        if defaults.get('requested_transport') and mode != defaults['requested_transport']:
+            defaults.pop('port', None)
+        address = field('host', '服务器域名或 IPv4；如含 : 后缀，向导会要求确认它是 TCP 端口还是 VNC 显示编号')
+        host = address
+        port = None
+        if ':' in address:
+            if address.count(':') != 1:
+                raise ValueError('请只填写域名或 IPv4；IPv6 暂不支持。含 : 的后缀必须单独确认含义。')
+            host, suffix = address.rsplit(':', 1)
+            if not suffix.isdigit():
+                raise ValueError('地址后缀必须是数字；请分别确认主机名、TCP 端口或 VNC 显示编号。')
+            if mode == 'ssh':
+                choice = ask(f'将 :{suffix} 作为 SSH TCP 端口 {suffix}？输入 yes 确认', 'no').strip().lower()
+                if choice != 'yes':
+                    raise ValueError('未确认地址后缀含义，请将主机和 SSH TCP 端口分开填写。')
+                port = suffix
+            elif mode == 'vnc':
+                choice = ask(f'如何理解 :{suffix}？1=VNC 显示编号，2=实际 TCP 端口', '').strip()
+                if choice == '1':
+                    show('已将后缀识别为 VNC 显示编号；请另行填写服务器确认的实际 TCP 端口，显示编号不能直接当作端口。')
+                elif choice == '2':
+                    port = suffix
+                else:
+                    raise ValueError('请明确选择 VNC 显示编号或实际 TCP 端口。')
+            else:
+                choice = ask(f'如何理解 :{suffix}？1=实际 TCP 端口，2=VNC 显示编号', '').strip()
+                if choice == '1':
+                    port = suffix
+                elif choice == '2':
+                    mode = 'vnc'
+                    show('已选择 VNC 显示编号；请另行填写服务器确认的实际 TCP 端口，显示编号不能直接当作端口。')
+                else:
+                    raise ValueError('请明确选择 TCP 端口或 VNC 显示编号。')
+        if port is None:
+            default_port = '22' if mode == 'ssh' else ''
+            label = ('服务器确认的实际 VNC TCP 端口（不是显示编号）' if mode == 'vnc'
+                     else '实际 TCP 端口；SSH 常用 22，自动识别不扫描端口')
+            port = field('port', label, default_port)
         profile = {'schema': 1, **endpoint(host, port, mode)}
         check = ask('是否只探测此地址和端口的协议握手？不登录、不扫描其他端口。yes/no', 'no')
         detected = detect(profile['host'], profile['port']) if check.lower() == 'yes' else 'not_checked'
@@ -152,8 +188,10 @@ def main():
             else:
                 profile['state'] = 'vnc_saved_mcp_transport_unavailable'
                 show('VNC 配置可保存，但本 MCP 不能通过 VNC 自动部署或执行仿真。需要另行提供 SSH，或在服务器本机运行客户端；不要把 VNC 密码当作 SSH 密码。')
+        profile['local_profile_state'] = 'saved'
+        profile['remote_state'] = 'unverified'
         save_profile(args.output, profile)
-        show('已保存本地配置：' + str(Path(args.output).expanduser().absolute()) + '\n不含明文密码；握手识别不等于认证成功或仿真可用。')
+        show('本地配置已保存：' + str(Path(args.output).expanduser().absolute()) + '\n配置不含明文密码；远程连接、认证和执行器状态未验证，握手识别不等于认证成功或仿真可用。')
     except KeyboardInterrupt:
         print('已取消，未启动任何服务器任务。')
     except (ValueError, OSError, RuntimeError, ImportError) as exc:

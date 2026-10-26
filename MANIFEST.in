@@ -1,0 +1,12 @@
+include LICENSE README.md README.en.md README.zh-CN.md VALIDATION.md
+recursive-include src *.py
+recursive-include tests *.py
+recursive-include docs *.md
+recursive-include examples *.json *.scm *.cmd *.md
+global-exclude *.py[cod] *.log *.tdr *.plt *.sqlite3 *.sqlite3-* *.clixml *.pem *.pfx *.p12
+prune data
+prune run_cache
+prune research_data
+prune private
+prune credentials
+prune .git

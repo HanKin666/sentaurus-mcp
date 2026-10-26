@@ -2,6 +2,8 @@
 
 [中文](README.md) | **English**
 
+This version is `v0.1.0-alpha.3`, Python package `0.1.0a3`, a prerelease test version. Changes include read-only native project discovery, named-column ASCII PLT parsing, figure provenance, execution observations, bounded failure diagnostics and ZIP exports. See the [alpha.3 candidate notes](docs/release-alpha3.en.md), [native evidence guide](docs/native-evidence.md), and [runtime and export guide](docs/runtime-and-export.md). The release assets and corresponding source revision define the shipped contents.
+
 ## Contents
 
 - [What this project does](#what-this-project-does)
@@ -33,9 +35,7 @@ Sentaurus commonly runs on a server while the AI client runs on your computer. F
 | Sentaurus | Perform structure, mesh and device calculations | Server |
 | VNC Viewer | Display the server desktop for native GUI inspection | Your computer; this MCP does not control it |
 
-**The published second test release is `v0.1.0-alpha.2`.** Python package metadata still says `0.1.0` because it was not updated for that release. That number alone cannot identify the installed source revision. The second alpha and `main` include the connection wizard; the first alpha does not. This README describes `main`.
-
-The public MCP has passed synthetic tests, but a complete real Sentaurus run has not been validated. The author's research workflow is separate from validation of this public package. Private dashboard code and experiment data are not included.
+This README describes `v0.1.0-alpha.3`. The earlier alpha.2 does not contain the new changes. See the [validation record](VALIDATION.md) for tested scope and limits.
 
 ## Quick start
 
@@ -111,26 +111,20 @@ Experienced users and deployment assistants can continue with [manual installati
 | Create or append native Workbench experiments | Not implemented; current directories are batch folders |
 | Validate physics, extract metrics, optimize parameters | Not implemented |
 | Fill available CPU, memory, or license capacity | Not implemented; only concurrent experiment count is limited |
-| ZIP export, cancellation, crash recovery | Not implemented |
+| ZIP export of one or several runs | Local alpha.3 candidate; returns a server-local file path |
+| Cancellation, crash recovery | Not implemented |
 
 ## Software versions
 
-Recorded on 2026-09-09; installed versions are not compatibility guarantees.
+The table lists only the software environment exercised by the alpha.3 candidate. It is not a complete compatibility matrix and does not imply support for other combinations.
 
-| Software | Recorded version |
-| --- | --- |
-| Sentaurus TCAD | T-2022.03 (research manifest; individual component builds unverified) |
-| Codex desktop | 26.901.6511.0 |
-| Windows | 10.0.19045 |
-| RealVNC Viewer | 7.13.1.57 |
-| Python | 3.12.10, 64-bit |
-| MCP Python SDK | 1.30.0 |
-| HTTPX / Pydantic | 0.28.1 / 2.13.5 |
-| pytest / pip | 8.4.2 / 25.0.1 |
-| Git | 2.53.0.windows.2 |
-| Project release / package metadata | v0.1.0-alpha.2 / 0.1.0 |
-
-Remote OS, Python, SSH builds, VNC server, license manager, optional keyring backend and selected LLM checkpoint remain unverified. Locally installed VNC Server 6.5.0.41730 and SangforVNC 7,1,0,2 do not prove use in the workflow. An old local `sentaurus-workbench-mcp==0.1.0` distribution record is not an additional dependency: use a fresh virtual environment. This inventory does not establish public MCP end-to-end Sentaurus validation.
+| Item | Tested scope | Notes |
+| --- | --- | --- |
+| Python | 3.12 | Local Windows MCP/Worker test environment |
+| MCP Python SDK | 1.30 | Local MCP test environment |
+| pytest | 8.4 | Local automated test environment |
+| Sentaurus TCAD | T-2022.03 | Linux native tools were used in one small smoke run through an operator-provided SSH tool adapter; the adapter is not distributed |
+| Deployment combination | Windows local MCP/Worker; Linux native Sentaurus tools | Direct Linux-hosted MCP deployment and a multi-platform, multi-version compatibility matrix have not been verified |
 
 ## Manual installation
 
@@ -220,7 +214,7 @@ Generic JSON example for a client running **on the same machine** as the MCP ser
 - For a Windows client and Linux server, configure an SSH STDIO connection so the MCP executable runs on the server. A server path cannot be used as a Windows local executable. The local wizard generates connection settings; server installation remains separate.
 - A Windows local installation typically uses `.venv/Scripts/sentaurus-mcp.exe`; this does not imply Sentaurus is available there.
 
-A successful connection should expose the eight tools listed below. Start the Worker before submitting experiments.
+A successful connection should expose the tools declared by that version. Start the Worker before submitting experiments.
 
 ## First use: diagnostics and connection guidance
 
@@ -327,7 +321,7 @@ First install and configure the package on the server and start the Worker indep
 - To select a key, add `"-i", "/absolute/local/path/to/private_key"` before the destination, or use local SSH configuration. Supply a path, never key contents.
 - Noninteractive sessions may not load interactive shell environment settings. The server Worker needs the Sentaurus license and library environment. Login scripts must not print extra text into the MCP standard-output stream.
 
-Start by listing experiments, then test submission within your authorized scope. Discovering eight tools proves interface connectivity, **not successful Sentaurus execution or physical validation**.
+Start by listing experiments, then test submission within your authorized scope. Tool discovery proves interface connectivity, **not successful Sentaurus execution or physical validation**.
 
 Troubleshooting: check credentials for `Permission denied`; check address, SSH port, and network for refused/timed-out connections; verify host-key changes with the administrator rather than disabling checks; check Worker state and configuration paths if it is offline.
 
@@ -410,7 +404,7 @@ Inspect real processes and logs. An abnormal exit may leave stale state. Automat
 
 ### Can it plot TDR data?
 
-It currently lists files only. TDR parsing, native slices, metric extraction, and ZIP export are future work.
+The alpha.3 candidate lists native files, reads named ASCII PLT columns and exports finished runs to ZIP. TDR parsing, native slices and automatic physics-metric extraction remain unimplemented.
 
 ### Which timing and hardware data are recorded?
 
@@ -427,24 +421,11 @@ python -m pip install -e '.[test]'
 python -m pytest -q
 ```
 
-Recorded local validation: Windows, Python 3.12, **12 tests passed (second alpha release)**, covering real MCP protocol interaction, continued execution after client exit, duplicate submission, input validation, and concurrency limits.
-
-Tests use synthetic Python tasks, not real Sentaurus simulations. A Linux CI workflow is included; check the repository Actions page for its status. See [validation details](VALIDATION.md).
+Automation results and the single software smoke run for the local alpha.3 candidate are summarized in the [validation record](VALIDATION.md). They are not a cross-platform compatibility acceptance or device-physics validation.
 
 ## Development background
 
-This project grew out of using Codex to assist Sentaurus TCAD research. The development workflow combined viewing the remote native Sentaurus interface through VNC Viewer with script execution, log analysis, and result checks. Reusable experiment-management steps were then organized into an MCP interface.
-
-| Component | Role in the workflow |
-| --- | --- |
-| Codex | Assist with writing and revising scripts, organizing experiments, analyzing logs, and developing tools |
-| VNC Viewer | View remote Sentaurus interfaces and support manual checks of structures and run status |
-| Sentaurus | Perform the actual structure, mesh, and device simulations |
-| This MCP and its independent Worker | Expose preparation, submission, status, and log tools to AI clients and launch batch tasks |
-
-The current release starts simulations through an independent server-side Worker. It does not require Codex to operate VNC Viewer, and other AI clients supporting the applicable MCP connection can connect. Automated VNC interaction, interactive SDE modeling, and native screenshot capture are not features of the current release.
-
-The private research dashboard, server configuration, and device experiment data used during development are not distributed with this repository. This background does not imply that the current MCP has passed real Sentaurus end-to-end validation; see the [validation record](VALIDATION.md) for the tested scope.
+This project organizes experiment preparation, batch submission, status queries and log access behind an MCP interface. The intended deployment uses an independently running Worker to launch simulations. Automated VNC interaction, interactive SDE modeling and native screenshots are not current features. The alpha.3 software smoke path used an external SSH tool adapter; direct Linux-hosted MCP deployment has not been verified. See the [validation record](VALIDATION.md).
 
 ## References and licensing
 
@@ -457,3 +438,4 @@ Uses the official MCP Python SDK with `>=1.12,<2`.
 Original code and documentation in this project are licensed under the [Apache License 2.0](LICENSE). Copyright 2026 HanKin666. Third-party dependencies retain their own licenses.
 
 This license does not grant rights to use Sentaurus or other third-party commercial software; users must obtain the required authorization separately. This unofficial project is not endorsed by Synopsys and includes no commercial software, manuals, or license entitlements.
+

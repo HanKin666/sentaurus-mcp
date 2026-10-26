@@ -9,17 +9,32 @@ from sentaurus_mcp.doctor import diagnose, connection_guide
 
 def test_unconfigured_and_vnc(monkeypatch):
     monkeypatch.delenv('SENTAURUS_MCP_CONFIG', raising=False)
-    assert diagnose()['configuration']['state'] == 'missing'
+    report = diagnose()
+    assert report['configuration']['state'] == 'missing'
+    assert report['connection']['state'] == 'current_host_only'
+    assert '不代表远程服务器已连接' in report['connection']['message']
+    assert report['readiness_stages']['configured']['state'] == 'missing'
+    assert report['readiness_stages']['executable']['state'] == 'unknown'
+    assert report['readiness_stages']['worker_lease']['state'] == 'unknown'
     assert connection_guide('vnc')['state'] == 'unsupported_transport'
 
 
-def test_readonly_and_worker(tmp_path):
+def test_readonly_and_worker(tmp_path, monkeypatch):
+    def unexpected_execution(*args, **kwargs):
+        raise AssertionError('diagnose must not execute configured tools')
+    monkeypatch.setattr('sentaurus_mcp.doctor.subprocess.run', unexpected_execution)
     root = tmp_path/'data'
     config = tmp_path/'config.json'
     config.write_text(json.dumps({'root': str(root), 'tools': {'demo': [sys.executable]}}))
-    assert diagnose(config)['worker']['state'] == 'offline'
+    report = diagnose(config)
+    assert report['worker']['state'] == 'offline'
+    assert report['readiness_stages']['configured']['state'] == 'configured'
+    assert report['readiness_stages']['executable'] == {'state': 'ready', 'tools': {'demo': 'executable_found'}}
+    assert report['readiness_stages']['worker_lease']['state'] == 'offline'
     assert not root.exists()
     root.mkdir()
+    assert diagnose(config)['worker']['state'] == 'offline'
+    assert not (root/'experiments.sqlite3').exists()
     with sqlite3.connect(root/'experiments.sqlite3') as db:
         db.execute('CREATE TABLE worker (id INTEGER,heartbeat REAL)')
         db.execute('INSERT INTO worker VALUES (1,?)',(time.time(),))
@@ -35,7 +50,10 @@ def test_readonly_and_worker(tmp_path):
 def test_invalid_and_safe_remote(tmp_path):
     config = tmp_path/'bad.json'
     config.write_text('{}')
-    assert diagnose(config)['configuration']['state'] == 'invalid'
+    report = diagnose(config)
+    assert report['configuration']['state'] == 'invalid'
+    assert report['readiness_stages']['configured']['state'] == 'invalid'
+    assert report['readiness_stages']['worker_lease']['state'] == 'unknown'
     r = connection_guide('ssh','server.example.com','user',2222,'/path with space/python',"/tmp/a;echo nope")
     assert shlex.split(r['probe_argv'][-1])[-1] == '/tmp/a;echo nope'
     assert 'BatchMode=yes' in r['probe_argv']

@@ -1,14 +1,30 @@
-# Validation — 2026-09-09
+# 验证记录 / Validation
 
-- Environment: Windows, Python 3.12, official MCP SDK 1.30.0, pytest 8.4.2.
-- Synthetic service and actual STDIO protocol tests: 5 passed.
-- Actual MCP initialization, tool discovery, create and submit calls exercised.
-- Independent Worker completed synthetic task after MCP client shutdown.
-- Concurrent duplicate submit created only one queued attempt.
-- Input fingerprint change and invalid identifiers rejected.
-- max_parallel=1 serialized two tasks; nonzero subprocess exit retained as failed.
-- State survived a new Service instance; logs and unreviewed quality label verified.
+## alpha.3 测试版本
 
-An earlier prototype spawned runners directly from MCP. The Windows MCP client's Job Object cleanup terminated that child. The final implementation uses an independently started Worker, and the disconnect test now passes.
+本记录对应 `v0.1.0-alpha.3`，Python 包版本为 `0.1.0a3`。验证仅覆盖下列条件，不能外推为全部平台和软件版本的兼容承诺。
 
-No real Sentaurus execution, license validation or physical-result acceptance was performed. Linux CI is provided but has not run remotely. No public GitHub repository has been created or pushed by this task. Private dashboard data and current simulation are outside this repository and these tests.
+### 软件测试
+
+- 在 Python 3.12、MCP Python SDK 1.30、pytest 8.4 环境中构建并独立安装 wheel；本地 MCP 和 Worker 运行于 Windows。
+- 原有回归套件：33 passed、1 skipped、0 failed。跳过项依赖当前环境未提供的普通符号链接权限。
+- 独立合成客户端场景另有 6 项通过，覆盖标准输入输出通信、并发防重复、运行中断连和重连、诊断与归档检查。该 6 项为独立场景，不并入上述回归套件计数。
+
+### 一次 Sentaurus 软件冒烟测试
+
+在 Linux 服务器上使用 Sentaurus T-2022.03 原生工具执行了一次最小硅电阻流程：SDE、网格和 SDevice。MCP 与 Worker 在 Windows 本机运行，通过操作者单独配置的 SSH 工具适配器调用远端原生工具。该适配器是测试辅助，不随发布包提供；这项验证不证明 Linux 端直接部署 MCP 可用。
+
+输入为 10 × 1 µm 硅结构、施主浓度 `1e16 cm⁻³`、温度 300 K，在 0.1 V 偏压下完成单点输出。生成的网格含 165 个点和 256 个三角形，左右端电流约为 `−/+1.885 µA`。这只是检查软件执行链和文件读写的冒烟例子，不是器件研究结果、模型校准或物理有效性结论。
+
+通用硅电阻输入见[最小示例](examples/smoke/README.md)。实际连接配置、原生输出、日志和运行记录保留在私有验证环境，不随发布包提供。
+
+## 为什么仍为 alpha
+
+这是软件预发布候选。alpha 状态反映当前验证覆盖较窄：本地 MCP/Worker 只在一个 Windows 环境测试，真实工具只通过外部 SSH 适配器验证过一个 Linux 执行路径；恢复和故障场景覆盖有限，也没有跨平台、跨版本兼容矩阵。一次真实软件冒烟测试不能替代这些软件成熟度验证。
+
+alpha 是软件成熟度标签，不对任何科学结论作判断。本次小型冒烟测试不支持科研结论或器件物理验收。
+
+## 未覆盖范围
+
+尚未证明 Linux 端直接部署 MCP、不同操作系统与依赖版本的兼容性、全面的崩溃恢复行为或广泛的 Sentaurus 模块兼容性。实际发布内容、标签和包元数据以完成发布时的仓库及发行包为准。
+

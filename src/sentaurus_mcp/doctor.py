@@ -14,9 +14,14 @@ import time
 
 def diagnose(config_path=None):
     report = {'runtime': {'state': 'available', 'platform': sys.platform},
-              'connection': {'state': 'current_host_only', 'message': '仅检查当前 MCP 所在主机，不代表已连接远程服务器。'},
+              'connection': {'state': 'current_host_only', 'message': '仅检查当前 MCP 所在主机；配置文件存在不代表远程服务器已连接。'},
               'configuration': {'state': 'missing'}, 'storage': {'state': 'unknown'},
               'worker': {'state': 'unknown'}, 'tools': {},
+              'readiness_stages': {
+                  'configured': {'state': 'missing'},
+                  'executable': {'state': 'unknown', 'tools': {}},
+                  'worker_lease': {'state': 'unknown'},
+              },
               'license': {'state': 'unverified', 'message': '文件存在不代表许可证有效或仿真可运行。'},
               'actions_enabled': os.getenv('SENTAURUS_ENABLE_ACTIONS', '0') == '1',
               'next_steps': []}
@@ -34,9 +39,11 @@ def diagnose(config_path=None):
             raise ValueError('tools must be an object')
     except (OSError, ValueError, KeyError, TypeError):
         report['configuration']['state'] = 'invalid'
+        report['readiness_stages']['configured']['state'] = 'invalid'
         report['next_steps'].append('检查配置文件可读、JSON 格式以及 root 绝对路径。')
         return report
     report['configuration']['state'] = 'valid'
+    report['readiness_stages']['configured']['state'] = 'configured'
     report['storage']['state'] = 'accessible' if root.is_dir() and os.access(root, os.W_OK | os.X_OK) else 'not_ready'
     report['storage']['message'] = '权限检查不创建文件；实际写入仍需验证。'
     for name, argv in profiles.items():
@@ -44,6 +51,13 @@ def diagnose(config_path=None):
         executable = Path(argv[0]) if valid else None
         ready = valid and executable.is_absolute() and executable.is_file() and os.access(executable, os.X_OK)
         report['tools'][name] = {'state': 'executable_found' if ready else 'not_found', 'execution': 'unverified'}
+    executable_state = ('ready' if report['tools'] and
+                        all(v['state'] == 'executable_found' for v in report['tools'].values())
+                        else 'not_ready')
+    report['readiness_stages']['executable'] = {
+        'state': executable_state,
+        'tools': {name: value['state'] for name, value in report['tools'].items()},
+    }
     if not profiles or any(v['state'] != 'executable_found' for v in report['tools'].values()):
         report['next_steps'].append('在运行主机配置真实 Sentaurus 可执行文件路径。')
     dbpath = root / 'experiments.sqlite3'
@@ -57,6 +71,7 @@ def diagnose(config_path=None):
             report['worker'] = {'state': 'online' if age is not None and 0 <= age <= 10 else 'stale_or_offline', 'heartbeat_age_seconds': age}
         except (sqlite3.Error, ValueError, TypeError):
             report['worker']['state'] = 'unreadable'
+    report['readiness_stages']['worker_lease'] = dict(report['worker'])
     if report['worker']['state'] != 'online':
         report['next_steps'].append('在服务器独立终端或服务管理器启动 sentaurus-worker，并使用同一配置。')
     if report['storage']['state'] != 'accessible':
@@ -67,7 +82,7 @@ def diagnose(config_path=None):
 
 def connection_guide(mode='ssh', host='', user='', port=22, remote_python='', remote_config=''):
     if mode == 'vnc':
-        return {'state': 'unsupported_transport', 'message': 'VNC 仅提供桌面画面，当前 MCP 不支持通过 VNC 自动部署或传输工具调用。',
+        return {'state': 'unsupported_transport', 'message': 'VNC 仅提供桌面画面，当前 MCP 不支持通过 VNC 自动部署或传输工具调用。:1 一类写法通常是显示编号，不等于已确认的 TCP 端口。',
                 'steps': ['向管理员申请 SSH 或其他获准的通信方式。', '可在服务器桌面手动安装 MCP，并独立启动执行器。', '仅启动代理不够；本机客户端仍需可用的 SSH 通道，或在服务器本机运行客户端。']}
     if mode != 'ssh':
         raise ValueError('mode must be ssh or vnc')

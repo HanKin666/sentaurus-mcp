@@ -20,3 +20,16 @@ id_ed25519*
 config.json
 connection*.txt
 data/
+*.clixml
+*.pfx
+*.p12
+*.key
+known_hosts*
+credentials/
+private/
+validation_results/
+*-junit.xml
+junit*.xml
+*.zip
+*.whl
+*.tar.gz

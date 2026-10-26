@@ -16,7 +16,25 @@ def main():
                 ids=[r[0] for r in db.execute("SELECT id FROM runs WHERE state='queued' ORDER BY rowid")]
             for rid in ids:
                 try:service.launch_queued(rid)
-                except (ValueError,OSError) as exc:service.update(rid,'failed',{'error':str(exc),'validation':'not_reviewed','finished_at':time.time()})
+                except (ValueError,OSError) as exc:
+                    now=time.time()
+                    detail=str(exc)
+                    verified='changed after preparation' in detail or 'unavailable' in detail
+                    reason='immutable_input_changed' if 'changed after preparation' in detail else (
+                        'immutable_input_unavailable' if verified else 'launch_error'
+                    )
+                    service.update(rid,'failed',{
+                        'error':detail,
+                        'failure':{
+                            'stage_index':None,
+                            'reason':reason,
+                            'verified':verified,
+                            'detail':detail,
+                        },
+                        'heartbeat_at':now,
+                        'finished_at':now,
+                        'validation':'not_reviewed',
+                    })
             time.sleep(.5)
     finally:
         with service.connect() as db:db.execute('DELETE FROM worker WHERE token=?',(token,))

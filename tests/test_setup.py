@@ -48,4 +48,20 @@ def test_vnc_wizard(tmp_path, monkeypatch):
     main()
     data = json.loads(path.read_text(encoding='utf-8'))
     assert data['state'] == 'vnc_saved_mcp_transport_unavailable'
+    assert data['local_profile_state'] == 'saved'
+    assert data['remote_state'] == 'unverified'
     assert 'credential_ref' not in data
+
+
+def test_ambiguous_vnc_display_is_confirmed_separately_from_tcp_port(tmp_path, monkeypatch):
+    path = tmp_path/'connection.txt'
+    answers = iter(['vnc', 'server.example.com:01', '1', '5901', 'no', '', 'unknown'])
+    monkeypatch.setattr('builtins.input', lambda _: next(answers))
+    monkeypatch.setattr('sys.argv', ['setup', '--output', str(path)])
+    main()
+    data = json.loads(path.read_text(encoding='utf-8'))
+    assert data['host'] == 'server.example.com'
+    assert data['port'] == 5901
+    assert data['requested_transport'] == 'vnc'
+    assert data['local_profile_state'] == 'saved'
+    assert data['remote_state'] == 'unverified'
